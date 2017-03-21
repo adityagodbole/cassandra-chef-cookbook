@@ -25,7 +25,8 @@ server_ip = node['cassandra']['opscenter']['agent']['server_host']
 unless server_ip && !node['cassandra']['opscenter']['agent']['use_chef_search']
 
   unless Chef::Config[:solo]
-    search_results = search(:node, "roles:#{node['cassandra']['opscenter']['agent']['server_role']}")
+    search_results = search(:node, "chef_environment:#{node.chef_environment} "\
+      "AND roles:#{node['cassandra']['opscenter']['agent']['server_role']}")
     if !search_results.empty?
       server_ip = search_results[0]['ipaddress']
     else
@@ -44,16 +45,16 @@ package ops_agent['package_name'] do
 end
 
 service 'datastax-agent' do
-  supports :restart => true, :status => true
+  supports restart: true, status: true
   action [:enable, :start]
   subscribes :restart, "package[#{ops_agent['package_name']}]"
 end
 
 template ::File.join(node['cassandra']['opscenter']['agent']['conf_dir'], 'address.yaml') do
-  mode 0644
+  mode '0644'
   owner node['cassandra']['user']
   group node['cassandra']['group']
   source 'opscenter-agent.conf.erb'
-  variables(:server_ip => server_ip)
+  variables(server_ip: server_ip)
   notifies :restart, 'service[datastax-agent]'
 end

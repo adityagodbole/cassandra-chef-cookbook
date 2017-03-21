@@ -33,7 +33,8 @@ end
 
 node.default['cassandra']['installation_dir'] = '/usr/share/cassandra'
 # node['cassandra']['installation_dir subdirs
-node.default['cassandra']['bin_dir']   = ::File.join(node['cassandra']['installation_dir'], 'bin')
+node.default['cassandra']['bin_dir'] = '/usr/bin' # package default folder for tools
+node.default['cassandra']['sbin_dir'] = '/usr/sbin' # package default for daemon startup binary
 node.default['cassandra']['lib_dir'] = ::File.join(node['cassandra']['installation_dir'], 'lib')
 
 # commit log, data directory, saved caches and so on are all stored under the data root. MK.
@@ -75,34 +76,44 @@ when 'debian'
   unless node['cassandra']['dse']
     # DataStax Server Community Edition package will not install w/o this
     # one installed. MK.
-    package 'python-cql'
+    package node['cassandra']['tools_package_name'] if node['platform_version'].to_f < 16.04
 
     # This is necessary because apt gets very confused by the fact that the
     # latest package available for cassandra is 2.x while you're trying to
     # install dsc12 which requests 1.2.x.
     apt_preference node['cassandra']['package_name'] do
-      pin "version #{node['cassandra']['version']}-#{node['cassandra']['release']}"
+      if node['cassandra']['release'].to_s != ''
+        pin "version #{node['cassandra']['version']}-#{node['cassandra']['release']}"
+      else
+        pin "version #{node['cassandra']['version']}"
+      end
       pin_priority '700'
     end
+
     apt_preference 'cassandra' do
       pin "version #{node['cassandra']['version']}"
       pin_priority '700'
     end
+
+    package 'cassandra' do
+      options '--force-yes -o Dpkg::Options::="--force-confold"'
+      version node['cassandra']['version']
+    end
   end
 
-#  package 'cassandra' do
-#    version node['cassandra']['version']
-#  end
-
   package node['cassandra']['package_name'] do
-    action :install
     options '--force-yes -o Dpkg::Options::="--force-confold"'
-    version "#{node['cassandra']['version']}-#{node['cassandra']['release']}"
+    if node['cassandra']['release'].to_s != ''
+      version "#{node['cassandra']['version']}-#{node['cassandra']['release']}"
+    else
+      version node['cassandra']['version']
+    end
     # giving C* some time to start up
     notifies :start, 'service[cassandra]', :immediately
     notifies :run, 'ruby_block[sleep30s]', :immediately
     notifies :run, 'ruby_block[set_fd_limit]', :immediately
     notifies :run, 'execute[set_cluster_name]', :immediately
+    action :install
   end
 
   ruby_block 'sleep30s' do
@@ -125,7 +136,7 @@ when 'debian'
   end
 
   execute 'set_cluster_name' do
-    command "/usr/bin/cqlsh -e \"update system.local set cluster_name='#{node['cassandra']['config']['cluster_name']}' where key='local';\"; /usr/bin/nodetool flush;"
+    command "/usr/bin/cqlsh -e \"update system.local set cluster_name='#{node['cassandra']['config']['cluster_name']}' where key='local';\"; /usr/bin/nodetool flush system;"
     notifies :restart, 'service[cassandra]', :delayed
     action :nothing
   end
@@ -133,10 +144,47 @@ when 'debian'
 when 'rhel'
   node.default['cassandra']['conf_dir'] = '/etc/cassandra/conf'
 
+  if node['cassandra']['use_systemd']
+    node.default['cassandra']['startup_program'] = ::File.join(node['cassandra']['sbin_dir'], 'cassandra')
+    include_recipe 'cassandra-dse::systemd'
+  end
+
   yum_package node['cassandra']['package_name'] do
-    version "#{node['cassandra']['version']}-#{node['cassandra']['release']}"
+    if node['cassandra']['release'].to_s != ''
+      version "#{node['cassandra']['version']}-#{node['cassandra']['release']}"
+    else
+      version node['cassandra']['version']
+    end
     allow_downgrade
+    notifies :run, 'ruby_block[set_jvm_search_dirs_on_java_8]', :immediately
     options node['cassandra']['yum']['options']
+  end
+
+  if node['cassandra']['use_systemd']
+    file '/etc/init.d/' + node['cassandra']['service_name'] do
+      action :delete
+    end
+  end
+
+  # applying fix for java search directories, on java 8 it needs to be update
+  # including the new directories
+  ruby_block 'set_jvm_search_dirs_on_java_8' do
+    block do
+      init_path = if node['cassandra']['use_systemd']
+                    ::File.join('/etc/systemd/system/', node['cassandra']['service_name'] + '.service')
+                  else
+                    ::File.join('/etc/init.d/', node['cassandra']['service_name'])
+                  end
+      f = Chef::Util::FileEdit.new(init_path)
+      f.search_file_replace_line(
+        /^JVM_SEARCH_DIRS=.*$/,
+        'JVM_SEARCH_DIRS="/usr/lib/jvm/jre /usr/lib/jvm/jre-1.8.* /usr/lib/jvm/java-1.8.*/jre"'
+      )
+      f.write_file
+    end
+    only_if { node['java']['jdk_version'] == 8 }
+    notifies :restart, 'service[cassandra]', :delayed
+    action :nothing
   end
 
   # Creating symlink from user defined config directory to default
@@ -146,26 +194,32 @@ when 'rhel'
     recursive true
     mode '0755'
   end
+
   link node['cassandra']['conf_dir'] do
     to node.default['cassandra']['conf_dir']
     owner node['cassandra']['user']
     group node['cassandra']['group']
-    not_if { node['cassandra']['conf_dir'] == node.default['cassandra']['conf_dir'] }
+    not_if { node['cassandra']['conf_dir'] == node.default['cassandra']['conf_dir'] || ::File.exist?(node['cassandra']['conf_dir']) }
   end
 end
 
-# These are required irrespective of package construction.
-# node['cassandra']['root_dir'] sub dirs need not to be managed by Chef,
-# C* service creates sub dirs with right user perm set.
-# Disabling, will keep entries till next commit.
-#
-[node['cassandra']['installation_dir'],
- node['cassandra']['conf_dir'],
- node['cassandra']['bin_dir'],
- node['cassandra']['log_dir'],
- node['cassandra']['root_dir'],
- node['cassandra']['lib_dir']
-].each do |dir|
+# manage C* directories
+directories = [
+  node['cassandra']['installation_dir'],
+  node['cassandra']['conf_dir'],
+  node['cassandra']['log_dir'],
+  node['cassandra']['root_dir'],
+  node['cassandra']['lib_dir'],
+  node['cassandra']['pid_dir'],
+  node['cassandra']['data_dir']
+]
+
+# including hints directory, in case is part of configuration
+if node['cassandra']['config'].key?('hints_directory')
+  directories << node['cassandra']['config']['hints_directory']
+end
+
+directories.flatten.each do |dir|
   directory dir do
     owner node['cassandra']['user']
     group node['cassandra']['group']

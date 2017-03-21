@@ -12,19 +12,23 @@ configuration parameters using Chef node attributes.
 
 It was originally created for CI and development environments and now supports cluster discovery using Chef search. **Feel free to contribute** what you find missing!
 
+## Supported Chef Versions
+
+This cookbook targets Chef 12 and later versions.
 
 ## Cookbook Dependencies
 
-- java
-- ulimit
-- apt
-- yum, '~> 3.0'
-- ark
-
+``` ruby
+depends 'java'
+depends 'ulimit'
+depends 'apt'
+depends 'yum'
+depends 'ark'
+```
 
 ## Cassandra Dependencies
 
-OracleJDK 8, OpenJDK 8, OracleJDK 7, OpenJDK 7, OpenJDK 6 or Sun JDK 6.
+Modern Cassandra versions require OracleJDK 8.
 
 
 ## Berkshelf
@@ -32,7 +36,7 @@ OracleJDK 8, OpenJDK 8, OracleJDK 7, OpenJDK 7, OpenJDK 6 or Sun JDK 6.
 ### Most Recent Release
 
 ``` ruby
-cookbook 'cassandra-dse', '~> 3.5.0'
+cookbook 'cassandra-dse', '~> 4.3.0'
 ```
 
 ### From Git
@@ -46,19 +50,19 @@ cookbook 'cassandra-dse', github: 'michaelklishin/cassandra-chef-cookbook'
 
 This cookbook currently provides
 
- * Cassandra 2.x via tarball
- * Cassandra 2.x (DataStax Community Edition) via packages.
- * DataStax Enterprise (DSE)
+ * Cassandra via tarballs
+ * Cassandra (DataStax Community Edition) via apt and yum packages
+ * DataStax Enterprise (DSE) via packages
 
 ## Supported OS Distributions
 
- * Ubuntu 11.04 through 14.04 via DataStax apt repo.
+ * Ubuntu 12.04 through 16.04 via DataStax apt repo.
  * RHEL/CentOS via DataStax yum repo.
  * RHEL/CentOS/Amazon via tarball
 
 ## Support JDK Versions
 
-Cassandra 2.x requires JDK 7+, Oracle JDK is recommended.
+Cassandra 2.x requires JDK 7+, later versions require Oracle JDK 8+.
 
 ## Recipes
 
@@ -84,7 +88,7 @@ You can also install the DataStax Enterprise edition by adding `node[:cassandra]
 Unencrypted Credentials:
  * `node[:cassandra][:dse][:credentials][:username]`: Your username from Datastax website.
  * `node[:cassandra][:dse][:credentials][:password]`: Your password from Datastax website.
- 
+
 Encrypted Credentials:
  * `node[:cassandra][:dse][:credentials][:databag][:name]`: Databag name, i.e. the value 'cassandra' will reference to `/data_bags/cassandra`.
  * `node[:cassandra][:dse][:credentials][:databag][:item]`: Databag item, i.e. the value 'main' will reference to `/data_bags/cassandra/main.json`.
@@ -115,6 +119,9 @@ documentation](http://www.datastax.com/documentation/cassandra/1.2/webhelp/cassa
 
 ## Node Attributes
 
+Please note that the maintainers try to keep the list below up-to-date but it fairly often misses
+some recently added attributes. Please refer to the [attributes files](https://github.com/michaelklishin/cassandra-chef-cookbook/tree/master/attributes) if an attribute you are looking for isn't listed.
+
 ### Core Attributes
 
  * `node[:cassandra][:install_method]` (default: datastax): The installation method to use (either 'datastax' or 'tarball').
@@ -123,6 +130,7 @@ documentation](http://www.datastax.com/documentation/cassandra/1.2/webhelp/cassa
  * `node[:cassandra][:tarball][:url]` and `node[:cassandra][:tarball][:sha256sum]` specify tarball URL and SHA256 check sum used by the `cassandra::tarball` recipe.
   * Setting `node[:cassandra][:tarball][:url]` to "auto" (default) will download the tarball of the specified version from the Apache repository.
  * `node[:cassandra][:setup_user]` (default: true): create user/group for Cassandra node process
+ * `node[:cassandra][:setup_user_limits]` (default: true): setup Cassandra user limits
  * `node[:cassandra][:user]`: username Cassandra node process will use
  * `node[:cassandra][:group]`: groupname Cassandra node process will use
  * `node[:cassandra][:heap_new_size]` set JVM `-Xmn`; if nil, defaults to `min(100MB * num_cores, 1/4 * heap size)`
@@ -130,8 +138,13 @@ documentation](http://www.datastax.com/documentation/cassandra/1.2/webhelp/cassa
  * `node[:cassandra][:installation_dir]` (default: `/usr/local/cassandra`): installation directory
  * `node[:cassandra][:root_dir]` (default: `/var/lib/cassandra`): data directory root
  * `node[:cassandra][:log_dir]` (default: `/var/log/cassandra`): log directory
- * `node[:cassandra][:local_jmx]` (default: false): bind JMX listener to localhost
+ * `node[:cassandra][:tmp_dir]` (default: none): tmp directory. Be careful what you set this to, as the cassandra user will be given ownership of that directory.
+ * `node[:cassandra][:local_jmx]` (default: true): bind JMX listener to localhost
  * `node[:cassandra][:jmx_port]` (default: 7199): port to listen for JMX
+ * `node[:cassandra][:jmx_remote_rmi_port]` (default: $JMX_PORT): port for jmx remote method invocation. If using internode SSL, there is a bug requiring this to be different than `node[:cassandra][:jmx_port]`
+ * `node[:cassandra][:jmx_remote_authenticate]` (default: false): turn on to require username/password for jmx operations including nodetool. To turn on requires `node[:cassandra][:local_jmx]` to be false
+ * `node[:cassandra][:jmx][:user]` (default: cassandra): username for jmx authentication
+ * `node[:cassandra][:jmx][:password]` (default: cassandra): password for jmx authentication.
  * `node[:cassandra][:notify_restart]` (default: false): notify Cassandra service restart upon resource update
   * Setting `node[:cassandra][:notify_restart]` to true will restart Cassandra service upon resource change
  * `node[:cassandra][:setup_jna]` (default: true): installs jna.jar
@@ -164,6 +177,8 @@ Attributes for fine tuning CMS/ParNew, the GC algorithm recommended for Cassandr
  * `node[:cassandra][:gc_max_tenuring_threshold]` -XX:MaxTenuringThreshold JVM parameter (default: 1)
  * `node[:cassandra][:gc_cms_initiating_occupancy_fraction]` -XX:CMSInitiatingOccupancyFraction JVM parameter (default: 75)
 
+Descriptions for these JVM parameters can be found [here](http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html#PerformanceTuning) and [here](http://www.oracle.com/technetwork/java/javase/gc-tuning-6-140523.html#cms.starting_a_cycle).
+
 Attributes for enabling G1 GC.
 
  * `node[:cassandra][:jvm][:g1]` (default: false)
@@ -172,8 +187,21 @@ Attributes for enabling GC detail/logging.
 
  * `node[:cassandra][:jvm][:gcdetail]` (default: false)
 
-Descriptions for these JVM parameters can be found [here](http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html#PerformanceTuning) and [here](http://www.oracle.com/technetwork/java/javase/gc-tuning-6-140523.html#cms.starting_a_cycle).
+Attributes for fine tuning the G1 GC algorithm:
 
+ * `node[:cassandra][:jvm][:g1_rset_updating_pause_time_percent]` (default: 10)
+ * `node[:cassandra][:jvm][:g1_heap_region_size]` -XX:G1HeapRegionSize (default: 0)
+ * `node[:cassandra][:jvm][:max_gc_pause_millis]` -XX:MaxGCPauseMillis (default: 200)
+ * `node[:cassandra][:jvm][:heap_occupancy_threshold]` -XX:InitiatingHeapOccupancyPercent (default: 45)
+ * `node[:cassandra][:jvm][:max_parallel_gc_threads]` This will set -XX:ParallelGCThreads to the number of cores on the machine (default: false)
+ * `node[:cassandra][:jvm][:max_conc_gc_threads]` This will set -XX:ConcGCThreads to the number of cores on the machine (default: false)
+ * `node[:cassandra][:jvm][:parallel_ref_proc]` -XX:ParallelRefProcEnabled (default: false)
+ * `node[:cassandra][:jvm][:always_pre_touch]` -XX:AlwaysPreTouch (default: false)
+ * `node[:cassandra][:jvm][:use_biased_locking]` -XX:UseBiasedLocking  (default: true)
+ * `node[:cassandra][:jvm][:use_tlab]` -XX:UseTLAB (default: true)
+ * `node[:cassandra][:jvm][:resize_tlab]` -XX:ResizeTLAB (default: true)
+
+Oracle JVM 8 tuning parameters: [here](https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/)
 
 ### Seed Discovery Attributes
 
@@ -190,7 +218,7 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
  * `node[:cassandra][:config][:num_tokens]` set the desired number of tokens. (default: 256)
  * `node[:cassandra][:config][:listen_address]` (default: node[:ipaddress]): address clients will use to connect to the node
  * `node[:cassandra][:config][:broadcast_address]` (default: node IP address): address to broadcast to other Cassandra nodes
- * `node[:cassandra][:config][:rpc_address]` (default: 0.0.0.0): address to bind the RPC interface
+ * `node[:cassandra][:config][:rpc_address]` (default: 0.0.0.0): address to bind the RPC interface.  Leave blank to lookup IP from hostname.
  * `node[:cassandra][:config][:hinted_handoff_enabled]` see http://wiki.apache.org/cassandra/HintedHandoff (default: true)
  * `node[:cassandra][:config][:max_hint_window_in_ms]` The maximum amount of time a dead host will have hints generated (default: 10800000).
  * `node[:cassandra][:config][:hinted_handoff_throttle_in_kb]` throttle in KB's per second, per delivery thread (default: 1024)
@@ -209,6 +237,7 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
  * `node[:cassandra][:config][:commitlog_sync_period_in_ms]` period for commitlog fsync when commitlog\_sync = periodic (default: 10000)
  * `node[:cassandra][:config][:commitlog_sync_batch_window_in_ms]` batch window for fsync when commitlog\_sync = batch (default: 50)
  * `node[:cassandra][:config][:commitlog_segment_size_in_mb]` Size of individual commitlog file segments (default: 32)
+ * `node[:cassandra][:config][:commitlog_total_space_in_mb]` If space gets above this value (it will round up to the next nearest segment multiple), Cassandra will flush every dirty CF in the oldest segment and remove it. (default: 4096)
  * `node[:cassandra][:config][:concurrent_reads]` Should be set to 16 * drives (default: 32)
  * `node[:cassandra][:config][:concurrent_writes]` Should be set to 8 * cpu cores (default: 32)
  * `node[:cassandra][:config][:trickle_fsync]` Enable this to avoid sudden dirty buffer flushing from impacting read latencies.  Almost always a good idea on SSDs; not necessary on platters (default: false)
@@ -220,7 +249,6 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
  * `node[:cassandra][:config][:start_native_transport]` Whether to start the native transport server (default: true)
  * `node[:cassandra][:config][:native_transport_port]` Port for the CQL native transport to listen for clients on (default: 9042)
  * `node[:cassandra][:config][:start_rpc]` Whether to start the Thrift RPC server (default: true)
- * `node[:cassandra][:config][:rpc_address]` Address to bind the Thrift RPC server to. Leave blank to lookup IP from hostname.  0.0.0.0 to listen on all interfaces.  (default: node[:ipaddress])
  * `node[:cassandra][:config][:rpc_port]` Port for Thrift RPC server to listen for clients on (default: 9160)
  * `node[:cassandra][:config][:rpc_keepalive]` Enable keepalive on RPC connections (default: true)
  * `node[:cassandra][:config][:rpc_server_type]` sync for one thread per connection; hsha for "half synchronous, half asynchronous" (default: sync)
@@ -237,7 +265,7 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
  * `node[:cassandra][:config][:truncate_request_timeout_in_ms]` How long the coordinator should wait for truncates to complete (default: 60000)
  * `node[:cassandra][:config][:request_timeout_in_ms]` Default timeout for other, miscellaneous operations (default: 10000)
  * `node[:cassandra][:config][:cross_node_timeout]` Enable operation timeout information exchange between nodes to accurately measure request timeouts. Be sure ntp is installed and node times are synchronized before enabling. (default: false)
- * `node[:cassandra][:config][:streaming_socket_timeout_in_ms]` Enable socket timeout for streaming operation (default: 0 - no timeout).
+ * `node[:cassandra][:config][:streaming_socket_timeout_in_ms]` Enable socket timeout for streaming operation (default: 3600000 - 1 hour)
  * `node[:cassandra][:config][:phi_convict_threshold]` Adjusts the sensitivity of the failure detector on an exponential scale (default: 8)
  * `node[:cassandra][:config][:endpoint_snitch]` SimpleSnitch, PropertyFileSnitch, GossipingPropertyFileSnitch, RackInferringSnitch, Ec2Snitch, Ec2MultiRegionSnitch (default: SimpleSnitch)
  * `node[:cassandra][:config][:dynamic_snitch_update_interval_in_ms]` How often to perform the more expensive part of host score calculation (default: 100)
@@ -284,7 +312,7 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
 ### JAMM Attributes
 
  * `node[:cassandra][:setup_jamm]` (default: false): install the jamm jar file and use it to set java option `-javaagent`, obsolete for C* versions `>v0.8.0`
- * `node[:cassandra][:jamm][:sha256sum]` (default: e3dd1200c691f8950f51a50424dd133fb834ab2ce9920b05aa98024550601cc5): jamm lib sha256sum for version `0.2.5`
+ * `node[:cassandra][:jamm][:sha256sum]` (default: calculated): jamm lib sha256sum for calculated version
  * `node[:cassandra][:jamm][:base_url]` (default: calculated): jamm lib jar url
  * `node[:cassandra][:jamm][:jar_name]` (default: calculated): jamm lib jar name
  * `node[:cassandra][:jamm][:version]` (default: calculated): jamm lib version
@@ -309,8 +337,17 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
  * `node[:cassandra][:logback][:file][:max_index]` (default: 20): logback File appender log files max_index
  * `node[:cassandra][:logback][:file][:min_index]` (default: 1): logback File appender log files min_index
  * `node[:cassandra][:logback][:file][:pattern]` (default: "%-5level [%thread] %date{ISO8601} %F:%L - %msg%n"): logback File appender log pattern
+ * `node[:cassandra][:logback][:debug][:enable]` (default: false): enable logback File appender log debug
+ * `node[:cassandra][:logback][:debug][:max_file_size]` (default: "20MB"): logback File appender log file rotation size
+ * `node[:cassandra][:logback][:debug][:max_index]` (default: 20): logback File appender log files max_index
+ * `node[:cassandra][:logback][:debug][:min_index]` (default: 1): logback File appender log files min_index
+ * `node[:cassandra][:logback][:debug][:pattern]` (default: "%-5level [%thread] %date{ISO8601} %F:%L - %msg%n"): logback File appender log pattern
  * `node[:cassandra][:logback][:stdout][:enable]` (default: true): enable logback STDOUT appender
  * `node[:cassandra][:logback][:stdout][:pattern]` (default: "%-5level %date{HH:mm:ss,SSS} %msg%n"): logback STDOUT appender log pattern
+ * `node[:cassandra][:logback][:syslog][:enable]` (default: false): enable logback SYSLOG appender. Requires RSYSLOG be installed and running on the node.
+ * `node[:cassandra][:logback][:syslog][:host]` (default: localhost): The host name the syslog is written to.
+ * `node[:cassandra][:logback][:syslog][:facility]` (default: USER) The facility specified for the appender.
+ * `node[:cassandra][:logback][:syslog][:pattern]` (default: "%-5level [%thread] %F:%L - %msg%n") lockback SYSLOG appender log pattern
 
 
 ### Ulimit Attributes
@@ -338,8 +375,26 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
  * `node[:cassandra][:opscenter][:server][:port]` (default: 8888)
  * `node[:cassandra][:opscenter][:server][:interface]` (default: 0.0.0.0)
  * `node[:cassandra][:opscenter][:server][:authentication]` (default: false)
+ * `node[:cassandra][:opscenter][:cassandra_metrics][:ignored_keyspaces]` (default: [system, OpsCenter])
+ * `node[:cassandra][:opscenter][:cassandra_metrics][:ignored_column_families]` (default: [])
+ * `node[:cassandra][:opscenter][:cassandra_metrics][:1min_ttl]` (default: 604800)
+ * `node[:cassandra][:opscenter][:cassandra_metrics][:5min_ttl]` (default: 2419200)
+ * `node[:cassandra][:opscenter][:cassandra_metrics][:2hr_ttl]` (default: 31536000)
+ * `node[:cassandra][:opscenter][:custom_configuration]` (default: {}) a hash of custom configuration sections to add to [opscenterd.conf](https://docs.datastax.com/en/opscenter/6.0/opsc/configure/opscConfigProps_r.html), e.g.:
+
+ ```
+{
+  'ui' => {
+    'default_api_timeout' => 300
+  },
+  'stat_reporter' => {
+    'interval' => 1
+  }
+}
+ ```
 
 #### DataStax Ops Center Agent Tarball attributes
+
  * `node[:cassandra][:opscenter][:agent][:download_url]` (default: "") Required. You need to specify
  agent download url, because that could be different for each opscenter server version. ( S3 is a great
  place to store packages )
@@ -350,13 +405,14 @@ Descriptions for these JVM parameters can be found [here](http://www.oracle.com/
  * `node[:cassandra][:opscenter][:agent][:server_host]` (default: "" ). If left empty, will use search to get IP by opscenter `server_role` role.
  * `node[:cassandra][:opscenter][:agent][:server_role]` (default: `opscenter_server`). Will be use for opscenter server IP lookup if `:server_host` is not set.
  * `node[:cassandra][:opscenter][:agent][:use_chef_search]` (default: `true`). Determines whether chef search will be used for locating the data agent server.
- * `node[:cassandra][:opscenter][:agent][:use_ssl]` (default: `true`)
+ * `node[:cassandra][:opscenter][:agent][:use_ssl]` (default: `false`)
 
 #### DataStax Ops Center Agent Datastax attributes
  * `node[:cassandra][:opscenter][:agent][:package_name]` (default: "datastax-agent" ).
  * `node[:cassandra][:opscenter][:agent][:server_host]` (default: "" ). If left empty, will use search to get IP by opscenter `server_role` role.
  * `node[:cassandra][:opscenter][:agent][:server_role]` (default: `opscenter_server`). Will be use for opscenter server IP lookup if `:server_host` is not set.
- * `node[:cassandra][:opscenter][:agent][:use_ssl]` (default: `true`)
+ * `node[:cassandra][:opscenter][:agent][:use_ssl]` (default: `false`)
+
 
 ### Data Center and Rack Attributes
 
@@ -379,6 +435,6 @@ Run the tests (`rake`), ensuring they all pass.
 ## Copyright & License
 
 Michael S. Klishin, Travis CI Development Team, and [contributors](https://github.com/michaelklishin/cassandra-chef-cookbook/graphs/contributors),
-2012-2015.
+2012-2017.
 
 Released under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0.html).

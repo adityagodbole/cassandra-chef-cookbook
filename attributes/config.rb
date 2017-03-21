@@ -20,6 +20,7 @@ default['cassandra']['config']['commitlog_sync'] = 'periodic' # 'batch' or 'peri
 default['cassandra']['config']['commitlog_sync_batch_window_in_ms'] = 50 # only applies to 'batch' sync
 default['cassandra']['config']['commitlog_sync_period_in_ms'] = 10_000 # only applies to 'periodic' sync
 default['cassandra']['config']['commitlog_segment_size_in_mb'] = 32
+default['cassandra']['config']['commitlog_total_space_in_mb'] = 4096
 default['cassandra']['config']['concurrent_reads'] = 32 # suggested at 16 * number of drives
 default['cassandra']['config']['concurrent_writes'] = 32 # suggested at 8 * number of cpu cores
 default['cassandra']['config']['trickle_fsync'] = false
@@ -61,7 +62,7 @@ default['cassandra']['config']['write_request_timeout_in_ms'] = 10_000
 default['cassandra']['config']['truncate_request_timeout_in_ms'] = 60_000
 default['cassandra']['config']['request_timeout_in_ms'] = 10_000
 default['cassandra']['config']['cross_node_timeout'] = false
-default['cassandra']['config']['streaming_socket_timeout_in_ms'] = 0 # never timeout streams
+default['cassandra']['config']['streaming_socket_timeout_in_ms'] = 3600000
 default['cassandra']['config']['stream_throughput_outbound_megabits_per_sec'] = 400
 default['cassandra']['config']['endpoint_snitch'] = 'SimpleSnitch' # endpoint_snitch config
 default['cassandra']['config']['dynamic_snitch_update_interval_in_ms'] = 100
@@ -71,8 +72,8 @@ default['cassandra']['config']['request_scheduler'] = 'org.apache.cassandra.sche
 default['cassandra']['config']['phi_convict_threshold'] = 8
 default['cassandra']['config']['index_interval'] = 128
 default['cassandra']['config']['num_tokens'] = 256
-default['cassandra']['config']['internode_compression'] = 'all' # all, dc, none
-default['cassandra']['config']['inter_dc_tcp_nodelay'] = true
+default['cassandra']['config']['internode_compression'] = 'dc' # all, dc, none
+default['cassandra']['config']['inter_dc_tcp_nodelay'] = false
 
 # C* 2.1.0
 if node['cassandra']['version'] >= '2.1'
