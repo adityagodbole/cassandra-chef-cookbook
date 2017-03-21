@@ -36,12 +36,10 @@ end
 def cassandra_bool_config(config_val)
   if config_val.is_a?(String)
     config_val
+  elsif config_val
+    'true'
   else
-    if config_val
-      'true'
-    else
-      'false'
-    end
+    'false'
   end
 end
 
@@ -62,7 +60,7 @@ def discover_seed_nodes
           "AND role:#{node['cassandra']['seed_discovery']['search_role']} "\
           "AND cassandra_config_cluster_name:#{node['cassandra']['config']['cluster_name']}"
       Chef::Log.info("Will discover Cassandra seeds using query '#{q}'")
-      xs = search(:node, q).map(&:ipaddress).sort.uniq
+      xs = search(:node, q).map { |node| node['ipaddress'] }.sort.uniq
       Chef::Log.debug("Discovered #{xs.size} Cassandra seeds using query '#{q}'")
 
       if xs.empty?
@@ -71,13 +69,10 @@ def discover_seed_nodes
         xs.take(node['cassandra']['seed_discovery']['count']).join(',')
       end
     end
+  elsif node['cassandra']['seeds'].is_a?(Array)
+    node['cassandra']['seeds'].join(',')
   else
-    # user defined seed nodes
-    if node['cassandra']['seeds'].is_a?(Array)
-      node['cassandra']['seeds'].join(',')
-    else
-      node['cassandra']['seeds']
-    end
+    node['cassandra']['seeds']
   end
 end
 
@@ -94,15 +89,23 @@ def jamm_version(version)
     '0.2.6'
   when /^2.1.[2-3]$/
     '0.2.8'
-  when /^2.1.11$/
-    '0.3.1'
   when /^2.1/
-    '0.3.0'
+    '0.3.1'
   when /^2.2/
     '0.3.1'
-  when /^3.0/
+  when /^3.[0-9]/
     '0.3.1'
   end
+end
+
+def jamm_url(version)
+  owner = if version.to_s.strip == '0.2.5'
+            'stephenc'
+          else
+            'jbellis'
+          end
+
+  "http://repo1.maven.org/maven2/com/github/#{owner}/jamm/#{version}"
 end
 
 def jamm_sha256sum(version)
@@ -110,7 +113,7 @@ def jamm_sha256sum(version)
   when '0.2.2'
     'unknown'
   when '0.2.5'
-    'b599dc7a58b305d697bbb3d897c91f342bbddefeaaf10a3fa156c93efca397ef'
+    'e3dd1200c691f8950f51a50424dd133fb834ab2ce9920b05aa98024550601cc5'
   when '0.2.6'
     'c9577bba0321eeb5358fdea29634cbf124ae3742e80d729f3bd98e0e23726dbf'
   when '0.2.8'
@@ -149,9 +152,20 @@ def tarball_sha256sum(version)
     '2.1.0' => 'da99c4ebc8de925dc6b493443b70d2183cf3090b1aad6b6b918efa9565f264dd', '2.1.1' => 'e9d10c2ccc6124d516772e672aef61732f763ff326967dc7fbcc3f1123a29901', '2.1.2' => '995182b62aada179648146a8fdd6f61881b23a33e77fe92c666c1816dad897be',
     '2.1.3' => 'df4ef06cd86c6c8a6bc1afee982279250a7a500aac20de55da48e43d0e3cebc3', '2.1.4' => 'fb5debada72905f169866ca43c21ade4782f9c036b160894e42b9072190cb7f1', '2.1.5' => '2d768e2fba9c576289e26247e2ed0b36fb802e06fa0a141783b765d63daf36ff',
     '2.1.6' => 'c2123b9d82b57868ad03c57720d9f4c99934fe292d571242a3b51337063409f7', '2.1.7' => 'add1a34b8e07dacb16df6b8dbe50c66d77cb46b89f66424103e2fd4459b79089', '2.1.8' => '3a0cc64efd529ffdc1600f6b3ad1946af85cc01544e2b469499aa81b10b722f5',
-    '2.1.9' => '7a33598d3b06cfbf9fd1264f1ad03a03a3d2c716c2e941b79b134cd2e781dc82', '2.2.0' => '6405eb063e7c8a44a485ac12b305c00ad62c526cc021bcce145c29423ae7b0a2', '2.2.1' => '06cad23535333b4dd72596bc9bd0606afd1a1ea74f2a91df571e3e00c51c473f'
+    '2.1.9' => '7a33598d3b06cfbf9fd1264f1ad03a03a3d2c716c2e941b79b134cd2e781dc82', '2.1.12' => '013ba98f70d2d77831a5336b6897d1f6fbb99a321616acffbd56747af85ff159', '2.1.13' => '102fffe21b1641696cbdaef0fb5a2fecf01f28da60c81a1dede06c2d8bdb6325',
+    '2.1.14' => '6f79830829c058899890e18bd881c5fe0ff949774b86aca5930cb6f01e7a1999', '2.1.15' => 'f72a5ac5753d5afc8a4e9ddcc383f9ed7cae79f9cbd80fdf272cfd5e1fc986f9', '2.1.16' => 'a95ba4e2c9345b31310d14507e8889797cc626bc793fd341fff8ff8cba3131cd',
+    '2.2.0' => '6405eb063e7c8a44a485ac12b305c00ad62c526cc021bcce145c29423ae7b0a2', '2.2.1' => '06cad23535333b4dd72596bc9bd0606afd1a1ea74f2a91df571e3e00c51c473f', '2.2.4' => '48af862becea9ec70999976212d13e2cfb85dcacf565729e763146f86d9365a4',
+    '2.2.5' => '149d2448d0543fb1d5f87a73a7a5e0f589319908426c3a45b20c85563e164f1f', '2.2.6' => 'fe9a56c842bad309ab7fbeb5adcda1757f650ec092ae2c926e6d0b4a8d7e89ad', '2.2.7' => 'eb09a744dfac4c645678d1ae0dd34483825c408f3ef08f81dc24b4307c9d5199',
+    '2.2.8' => 'eab09bfe27ac09558aa1bb2b391559d932b89cea94cf254d350395786d7b4a67', '3.0.0' => 'e268c8eeb25e02c1de18899f6aaa57a5a3636045070026ab4467c993f9559bec', '3.0.1' => '90d734946d15573ba7c6654ed047f0f3a8abd8bd134954ec96b8acb3ec677b05',
+    '3.0.2' => 'f9b7d29a3966fa1ae2e78920aed31a16bc3dbf56fd35690d146fea745c20353f', '3.0.3' => '555417f0d3b5c73fda7388a23becba28f2b87b1d6de082b7afde8d56b29ba4dd', '3.0.4' => '620e2aad12f6609ec3cd5f8ddf7ec16f9ccd9c1ca2a8c4e9acf1f9fc49e24ad0',
+    '3.0.5' => '92d28a97ed4a78080855090f6193dab26f4677c8799c64aadbebca3220c016ee', '3.0.6' => '8129a910d90f270af9b61c15d12d86f6b7a34de3f86614dd6112854989fd7e87', '3.0.7' => '0d9918e3a51fc81c319eb70acc1a65bc5a157b04d72296e255c8afc17f72963c',
+    '3.0.8' => '5852a9506f133f1b534d5d5faf1a8a56850bda7a623a19b3f180ae3b309a9009', '3.0.9' => '0f30304045ad1c257449c9506a3786faa7651b13d7522c1b3d0492cc80804d9a', '3.0.10' => 'bab04ef8ad997197a0e4f02250ed71240f339a44209b8d9f941ee6291130fa9a',
+    '3.1' => '238e5cde3bf90e81ba66ef3e8d68c051be02f8c51e3a0cb2a8a57abdfc8ba570', '3.1.1' => '8eec9dc11f1119cfff042be85d308de81a74d4266fb227eeeb799741085dade4', '3.2' => '80ccb14e08313c4c87b6c7d703676a20d948116544f2a0d2eb1c93a22d1be423',
+    '3.2.1' => '9995b953ce6263da6dd0fdc39100ba0013a3e597f2cbbff43dc1a812795f75ca', '3.3' => 'd98e685857d80f9eb93529f7b4f0f2c369ef40974866c8f8ad8edd3d6e0bf7e3', '3.4' => '6fea829d5c9e3c34448d519fb9744e645de921d12702cf2bc10b36f17d738794',
+    '3.5' => 'b575990dfa53567bc67407318330f9406750f4543a9d385b0fce326eb430bf4f', '3.6' => 'a568f80e224c497a7fb0edaad760960c79fef772d8c66ebf3960434982e8d079', '3.7' => '335f5344c4e6b98ec51324d821fa06e99101145ac6e83b5f6ede8c0ca5d15748',
+    '3.8' => 'cfae17f040c836dbe37e1d14737c804f60995d30e3a9d03ab6f42d373f0e2efc', '3.9' => '27cf88a6bce1ee2fb1a1c936094b9200ad844414c2b5b1491ba4991fcc0fd693'
   }
   sha256sum = sha256sums[version]
-  fail "sha256sum is missing for cassandra tarball version #{sha256sum}" unless sha256sum
+  raise "sha256sum is missing for cassandra tarball version #{sha256sum}" unless sha256sum
   sha256sum
 end

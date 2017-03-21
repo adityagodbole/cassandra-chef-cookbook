@@ -1,4 +1,150 @@
-## Changes Between 4.1.0 and 4.1.x
+## Changes Between 4.3.0 and 4.4.0 (unreleased)
+
+### `cassandra-env.sh` and JVM Options Synced with Cassandra 3
+
+GitHub issue: [#328](https://github.com/michaelklishin/cassandra-chef-cookbook/pull/328).
+
+Contributed by William Dauchy.
+
+
+## Changes Between 4.2.0 and 4.3.0 (10-01-2017)
+
+### systemd Support
+
+Contributed by William Dauchy, Romain Gerard, Jean-Francois Weber-Marx.
+
+### Update jamm Versions for Several Cassandra Series (e.g. 3.x)
+
+Contributed by William Dauchy and Corentin Chary.
+
+### Cassandra Version Changes Force Node Restarts
+
+Thanks to a neat template generation trick by William Dauchy.
+
+### Custom Sections in `opscenterd.conf`
+
+Contributed by eyalzek.
+
+### JMX Authentication Support
+
+Contributed by Andrew Nolan.
+
+### Make Sure that System Directory Permissions Are Unmodified
+
+Contributed by Jean-Francois Weber-Marx.
+
+### Bring Back Support for `native_transport_max_threads`
+
+Contributed by Corentin Chary.
+
+### Corrected `bin` Paths When Installing via Packages
+
+Contributed by Barthelemy Vessemont.
+
+### `cassandra_metrics` Are Now Configurable
+
+Contrbuted by eyalzek.
+
+### Ensure `source_dir` and `installation_dir` Minus the Leaf Directory Exist
+
+Contributed by Michal Jankowski.
+
+### Permissions of Optional JAR Files
+
+...are now set to `0440`.
+
+### Updated Package Checksums
+
+Contributed by Michal Jankowski.
+
+### Correctly Create `commitlog_dir` and `saved_caches_dir`
+
+Contributed by Ryan Scheidter.
+
+
+
+## Changes Between 4.1.0 and 4.2.0 (22-09-2016)
+
+### More Reliable Upgrades
+
+Contributed by Seth Rosenblum.
+
+### Temp Directory Attributes
+
+`cassandra.tmp_dir` is a new attribute that controls JNA and
+JVM temporary directory (`java.io.tmpdir`) location.
+
+Contributed by Jack Bracken.
+
+### Jamm Version Updates for 3.x Releases
+
+Contributed by Corentin Chary and Anthony Rabier.
+
+### Hints Directory Not Set for C* 2.x
+
+Hints directory is no longer set for C* 2.x as it's only
+supported in 3.x.
+
+Contributed by William Dauchy.
+
+### More Reasonable Streaming Operation Socket Timeout
+
+`cassandra.config.streaming_socket_timeout_in_ms` now defaults to 1 hour.
+
+Contributed by Dimitris Verraros.
+
+### Syslog Appender
+
+Add syslog appender to log to remote servers.
+
+Contributed by Andrew Nolan.
+
+### More Reliable Data Directory Management
+
+Contributed by Michael Saffitz.
+
+### 3.x Package Naming Fixes
+
+Contributed by Jason J. W. Williams.
+
+### OpsCenter Agent [Chef] Environment Fixes
+
+Contributed by Radek Wierzbicki.
+
+### New 3.x Settings
+
+Contributed by Otavio Fernandes.
+
+### Java 8 JVM Tuning options
+
+A number of tuning options have been added to the cookbook to provide more 
+knobs to control performance in the JVM. This work is centered around the
+use-case of Oracle JDK 8 with the G1 GC.
+ 
+Contributed by Matthew Silvey.
+
+## Changes Between 4.0.0 and 4.1.0 (Dec 28, 2015)
+
+### DSE Compatibiilty Bug Fixes
+
+For example, the `cassandra` package shouldn't be installed
+when DSE is provisioned.
+
+Contributed by Bill Warner and Dimitris Verraros.
+
+
+### OpsCenter Agent Has TLS Disabled by Default
+
+...and is now configured correctly when overridden.
+
+Contributed by Michael Belt.
+
+
+### Support Configuration of `commitlog_total_space_in_mb`
+
+The attribute `node[:cassandra][:config][:commitlog_total_space_in_mb]` takes on the cassandra default of `4096` and may be reconfigured.
+
+Contributed by Geoff Hichborn
 
 ### additional chefspec tests to at least cover all resources
 
@@ -11,7 +157,17 @@ rake unit
 
 Contributed by Bill Warner.
 
-## Changes Between 4.0.0 and 4.1.0
+### Default to localhost-only JMX
+
+The attribute `node[:cassandra][:local_jmx]` defaults to `true` now, making
+JMX listen on localhost only. This is the default since cassandra 2.0.14 and
+2.1.4 and fixes the remote code execution exploit from CVE-2015-0225.
+
+Should you choose to enable remote JMX access by setting this to false, be aware
+that this cookbook currently does not support configuring authentication for JMX,
+so you should limit access to the JMX port by other means, such as firewalling.
+
+Contributed by Bernhard Weisshuhn.
 
 ### Priam Support
 

@@ -2,6 +2,9 @@
 # This file is managed by Chef.
 # Do NOT modify this file directly.
 #
+# This commented out line will trigger a node restart when Cassandra version changes.
+# It's non-functional otherwise.
+# version: 2.2.0
 ---
 authenticator: org.apache.cassandra.auth.AllowAllAuthenticator
 authorizer: org.apache.cassandra.auth.AllowAllAuthorizer
@@ -24,6 +27,7 @@ commitlog_directory: "/var/lib/cassandra/commitlog"
 commitlog_segment_size_in_mb: 32
 commitlog_sync: periodic
 commitlog_sync_period_in_ms: 10000
+commitlog_total_space_in_mb: 4096
 compaction_throughput_mb_per_sec: 16
 concurrent_counter_writes: 32
 concurrent_reads: 32
@@ -43,8 +47,8 @@ hinted_handoff_throttle_in_kb: 1024
 incremental_backups: false
 index_interval: 128
 index_summary_resize_interval_in_minutes: 60
-inter_dc_tcp_nodelay: true
-internode_compression: all
+inter_dc_tcp_nodelay: false
+internode_compression: dc
 key_cache_save_period: 14400
 listen_address: 10.0.0.2
 max_hint_window_in_ms: 10800000
@@ -85,7 +89,7 @@ start_native_transport: true
 start_rpc: 'true'
 storage_port: 7000
 stream_throughput_outbound_megabits_per_sec: 400
-streaming_socket_timeout_in_ms: 0
+streaming_socket_timeout_in_ms: 3600000
 thrift_framed_transport_size_in_mb: 15
 thrift_max_message_length_in_mb: 16
 tombstone_failure_threshold: 100000
