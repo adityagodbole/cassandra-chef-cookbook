@@ -153,7 +153,7 @@ default['cassandra']['opscenter']['server']['authentication'] = false
 default['cassandra']['opscenter']['server']['ssl']['keyfile'] = '/var/lib/opscenter/ssl/opscenter.key'
 default['cassandra']['opscenter']['server']['ssl']['certfile'] = '/var/lib/opscenter/ssl/opscenter.pem'
 default['cassandra']['opscenter']['server']['ssl']['port'] = '8443'
-default['cassandra']['opscenter']['server']['ssl']['enabled'] = false
+default['cassandra']['opscenter']['server']['ssl']['enabled'] = true
 
 default['cassandra']['opscenter']['cassandra_metrics']['ignored_keyspaces'] = %w(system OpsCenter)
 default['cassandra']['opscenter']['cassandra_metrics']['ignored_column_families'] = []
