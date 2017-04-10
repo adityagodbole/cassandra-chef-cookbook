@@ -1,0 +1,24 @@
+# set to 1 to enable email
+enabled=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['enabled'] %>
+
+# levels can be comma delimited list of any of the following: 
+# DEBUG,INFO,WARN,ERROR,CRITICAL,ALERT 
+# If left empty, will listen for all levels 
+levels=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['levels'] %>
+smtp_host=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_host'] %>
+smtp_port=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_port'] %>
+smtp_user=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_user'] %>
+smtp_pass=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_password'] %>
+smtp_use_ssl=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_use_ssl'] %>
+smtp_use_tls=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_use_tls'] %>
+smtp_retries=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_retries'] %>
+smtp_timeout=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_timeout'] %>
+
+to_addr=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['receiver_addr'] %>
+from_addr=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['sender_addr'] %>
+
+# Customizable subject for email.  The key specified in {}'s must map to the items provided in json map at the end of
+# the emails. For example, some available keys are:
+#     node, cluster, datetime, level_str, message, target_node, event_source, success, api_source_ip, user, source_node
+# more advanced formatting options explained here: https://docs.python.org/2/library/string.html#formatspec
+subject=[{level_str}] OpsCenter Event on {cluster} - {message}

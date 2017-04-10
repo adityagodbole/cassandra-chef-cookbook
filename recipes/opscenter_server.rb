@@ -39,3 +39,15 @@ template '/etc/opscenter/opscenterd.conf' do
   mode '0644'
   notifies :restart, 'service[opscenterd]', :delayed
 end
+
+template '/etc/opscenter/event-plugins/email.conf' do
+  source 'opscenter_event_plugin_email.erb'
+  mode '0644'
+  notifies :restart, 'service[opscenterd]', :delayed
+end
+
+template '/etc/opscenter/event-plugins/posturl.conf' do
+  source 'opscenter_event_plugin_posturl.erb'
+  mode '0644'
+  notifies :restart, 'service[opscenterd]', :delayed
+end
