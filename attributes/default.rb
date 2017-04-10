@@ -156,7 +156,7 @@ default['cassandra']['opscenter']['server']['ssl']['certfile'] = '/var/lib/opsce
 default['cassandra']['opscenter']['server']['ssl']['port'] = '8443'
 default['cassandra']['opscenter']['server']['ssl']['enabled'] = true
 
-default['cassandra']['opscenter']['server']['event-plugin']['email']['enabled'] = 0
+default['cassandra']['opscenter']['server']['event-plugin']['email']['enabled'] = 1
 default['cassandra']['opscenter']['server']['event-plugin']['email']['levels'] = 'WARN'
 default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_host'] = ''
 default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_port'] = 465
@@ -169,7 +169,7 @@ default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_timeo
 default['cassandra']['opscenter']['server']['event-plugin']['email']['sender_addr'] = ''
 default['cassandra']['opscenter']['server']['event-plugin']['email']['receivers'] = []
 
-default['cassandra']['opscenter']['server']['event-plugin']['posturl']['enabled'] = 0
+default['cassandra']['opscenter']['server']['event-plugin']['posturl']['enabled'] = 1
 default['cassandra']['opscenter']['server']['event-plugin']['posturl']['endpoint'] = ''
 default['cassandra']['opscenter']['server']['event-plugin']['posturl']['levels'] = 'CRITICAL,ALERT'
 
