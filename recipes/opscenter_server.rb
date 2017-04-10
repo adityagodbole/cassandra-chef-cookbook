@@ -40,10 +40,18 @@ template '/etc/opscenter/opscenterd.conf' do
   notifies :restart, 'service[opscenterd]', :delayed
 end
 
-template '/etc/opscenter/event-plugins/email.conf' do
-  source 'opscenter_event_plugin_email.erb'
-  mode '0644'
-  notifies :restart, 'service[opscenterd]', :delayed
+receivers = @node['cassandra']['opscenter']['server']['event-plugin']['email']['receivers']
+
+receivers.each_with_index do |addr, index|
+  template "/etc/opscenter/event-plugins/email#{index}.conf" do
+    vars = {
+      receiver: addr
+    }
+    source 'opscenter_event_plugin_email.erb'
+    mode '0644'
+    variables vars
+    notifies :restart, 'service[opscenterd]', :delayed
+  end
 end
 
 template '/etc/opscenter/event-plugins/posturl.conf' do

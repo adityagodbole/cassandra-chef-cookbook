@@ -14,7 +14,7 @@ smtp_use_tls=<%= @node['cassandra']['opscenter']['server']['event-plugin']['emai
 smtp_retries=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_retries'] %>
 smtp_timeout=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_timeout'] %>
 
-to_addr=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['receiver_addr'] %>
+to_addr=<%= @receiver %>
 from_addr=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['sender_addr'] %>
 
 # Customizable subject for email.  The key specified in {}'s must map to the items provided in json map at the end of

@@ -166,6 +166,8 @@ default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_use_s
 default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_use_tls'] = 0
 default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_retries'] = 1
 default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_timeout'] = 5
+default['cassandra']['opscenter']['server']['event-plugin']['email']['sender_addr'] = ''
+default['cassandra']['opscenter']['server']['event-plugin']['email']['receivers'] = []
 
 default['cassandra']['opscenter']['server']['event-plugin']['posturl']['enabled'] = 0
 default['cassandra']['opscenter']['server']['event-plugin']['posturl']['endpoint'] = ''
