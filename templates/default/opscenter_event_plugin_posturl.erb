@@ -1,0 +1,7 @@
+[posturl] 
+enabled = <%= @node['cassandra']['opscenter']['server']['event-plugin']['posturl']['enabled'] %>
+url =  <%= @node['cassandra']['opscenter']['server']['event-plugin']['posturl']['endpoint'] %>
+# levels can be comma delimited list of any of the following: 
+# DEBUG,INFO,WARN,ERROR,CRITICAL,ALERT 
+# If left empty, will listen for all levels 
+levels = <%= @node['cassandra']['opscenter']['server']['event-plugin']['posturl']['levels'] %>

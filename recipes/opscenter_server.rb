@@ -39,3 +39,27 @@ template '/etc/opscenter/opscenterd.conf' do
   mode '0644'
   notifies :restart, 'service[opscenterd]', :delayed
 end
+
+receivers = node['cassandra']['opscenter']['server']['event-plugin']['email']['receivers']
+
+receivers.each_with_index do |addr, index|
+  template "/etc/opscenter/event-plugins/email#{index}.conf" do
+    vars = {
+      receiver: addr
+    }
+    source 'opscenter_event_plugin_email.erb'
+    mode '0644'
+    variables vars
+    notifies :restart, 'service[opscenterd]', :delayed
+  end
+end
+
+alert_endpoint = node['cassandra']['opscenter']['server']['event-plugin']['posturl']['endpoint']
+
+unless alert_endpoint.empty?
+  template '/etc/opscenter/event-plugins/posturl.conf' do
+    source 'opscenter_event_plugin_posturl.erb'
+    mode '0644'
+    notifies :restart, 'service[opscenterd]', :delayed
+  end
+end

@@ -150,10 +150,28 @@ default['cassandra']['opscenter']['server']['package_name'] = 'opscenter'
 default['cassandra']['opscenter']['server']['port'] = '8888'
 default['cassandra']['opscenter']['server']['interface'] = '0.0.0.0'
 default['cassandra']['opscenter']['server']['authentication'] = false
+
 default['cassandra']['opscenter']['server']['ssl']['keyfile'] = '/var/lib/opscenter/ssl/opscenter.key'
 default['cassandra']['opscenter']['server']['ssl']['certfile'] = '/var/lib/opscenter/ssl/opscenter.pem'
 default['cassandra']['opscenter']['server']['ssl']['port'] = '8443'
 default['cassandra']['opscenter']['server']['ssl']['enabled'] = true
+
+default['cassandra']['opscenter']['server']['event-plugin']['email']['enabled'] = 1
+default['cassandra']['opscenter']['server']['event-plugin']['email']['levels'] = 'WARN'
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_host'] = ''
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_port'] = 465
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_user'] = ''
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_password'] = ''
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_use_ssl'] = 0
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_use_tls'] = 0
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_retries'] = 1
+default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_timeout'] = 5
+default['cassandra']['opscenter']['server']['event-plugin']['email']['sender_addr'] = ''
+default['cassandra']['opscenter']['server']['event-plugin']['email']['receivers'] = []
+
+default['cassandra']['opscenter']['server']['event-plugin']['posturl']['enabled'] = 1
+default['cassandra']['opscenter']['server']['event-plugin']['posturl']['endpoint'] = ''
+default['cassandra']['opscenter']['server']['event-plugin']['posturl']['levels'] = 'CRITICAL,ALERT'
 
 default['cassandra']['opscenter']['cassandra_metrics']['ignored_keyspaces'] = %w(system OpsCenter)
 default['cassandra']['opscenter']['cassandra_metrics']['ignored_column_families'] = []
