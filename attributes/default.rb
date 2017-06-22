@@ -168,6 +168,8 @@ default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_retri
 default['cassandra']['opscenter']['server']['event-plugin']['email']['smtp_timeout'] = 5
 default['cassandra']['opscenter']['server']['event-plugin']['email']['sender_addr'] = ''
 default['cassandra']['opscenter']['server']['event-plugin']['email']['receivers'] = []
+# See https://docs.datastax.com/en/latest-opscenter/opsc/configure/opscEnablingEmailAlerts_t.html
+default['cassandra']['opscenter']['server']['event-plugin']['email']['subject_template'] = '[{level_str}] OpsCenter Event on {cluster} - {message}'
 
 default['cassandra']['opscenter']['server']['event-plugin']['posturl']['enabled'] = 1
 default['cassandra']['opscenter']['server']['event-plugin']['posturl']['endpoint'] = ''

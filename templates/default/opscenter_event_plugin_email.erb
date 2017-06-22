@@ -22,4 +22,4 @@ from_addr=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']
 # the emails. For example, some available keys are:
 #     node, cluster, datetime, level_str, message, target_node, event_source, success, api_source_ip, user, source_node
 # more advanced formatting options explained here: https://docs.python.org/2/library/string.html#formatspec
-subject=[{level_str}] OpsCenter Event on {cluster} - {message}
+subject=<%= @node['cassandra']['opscenter']['server']['event-plugin']['email']['subject_template'] %>
